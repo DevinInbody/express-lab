@@ -1,80 +1,53 @@
 const express = require("express");
+const {Client} = require("pg");
+const client = new Client({
+host: "localhost",
+database: "ExpressShopDB",
+port: 5400,
+user: "docker",
+password: "docker",
+});
+
+client
+.connect()
+.then(() => console.log("Connected to DB"))
+.catch((err) => console.err("Failed to connect to DB", err.stack))
+
+
 
 let cart = express.Router();
 
-let cartItems = [
-    {
-        id: 1,
-        product: "Adidas Harden 4",
-        price: 150,
-        quantity: 2
-    },
-    {
-        id: 2,
-        product: "Jordan 8",
-        price: 200,
-        quantity: 1
-    },
-    {
-        id: 3,
-        product: "Nike LeBron 15",
-        price: 150,
-        quantity: 3
-    },
-];
+getTable = (req, res) =>{
+    client.query('SELECT * FROM shopping_cart', (err, data) =>{
+        res.json({data: data.rows
+        })
+    })};
 
-cart.get("/", (req, res) =>{
-    console.log('body', req.body)
-    res.json({
-        cart: cartItems,
-        cart_size: cartItems.length
-    });
-});
+app.get('/', (req, res) =>{
+   getTable(req, res)
+        });
 
 cart.get("/:id", (req, res) =>{
-    const cart ={
-            cart: cartItems,
-        cart_size: cartItems[req.params.id - 1]
-    };
-    console.log('id', req.params.id);
+    client.query('SELECT * FROM shopping_cart', (err, data) =>{
+    res.json({
+        data: data.rows.id
+    })
+    console.log('id', data.rows.id);
     });
 
     cart.post("/", (req, res) =>{
-        console.log('req.body', req.body);
-        cartItems.push(req.body);
-        res.json({
-            msg: 'Added new item to the cart',
-            cartItems: cartItems,
-            product: req.body
-        })
+ client.query("insert into shopping_cart (product, price, quantity) values ($1::text)", [req.body]).then =x 
+ getTable(req,res)
     });
 
     cart.put('/:id', (req,res) => {
-        let requestId = request.params.id;
-
-        let item = cartItems.filter(item =>{
-            return item.id == requestId;
-        })[0];
-
-        const index = cartItems.indexOf(item);
-        const keys = object.keys(req.body);
-
-        keys.forEach(key =>{
-            item[key] = req.body[key];
-        });
-
-       cartItems[index] = item;
-
-       res.json(cartItems[index]);
-    });
+            });
 
     cart.delete('/:id', (req,res) => {
-        cartItems.splice(req.body, 1);
-        res.json({
-            msg: 'Removed item from the cart',
-            cartItems: cartItems,
-            item_removed: req.body
+        client.query("delete from shopping_cart where id=$1::int", [req.params.id]).then(() =>{
+            getTable(req.res)
+        })
     });
 });
 
-module.exports = cartItems;
+module.exports = cart;
